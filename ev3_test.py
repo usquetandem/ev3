@@ -1,9 +1,15 @@
+# if failure, try  /etc/init.d/lms2012-driver.sh
+
+
 import time
 import ev3
 from ev3.rawdevice import motordevice
 from ev3.sensor.lego import EV3IRSensor
-#from ev3.sensor.lego import EV3ColorSensor
+from ev3.sensor.lego import EV3ColorSensor
+from ev3.sensor.lego import EV3TouchSensor
 from argparse import ArgumentParser
+from ev3.rawdevice import uartdevice
+from ev3.rawdevice import sound
 
 ev3.open_all_devices()
 
@@ -17,23 +23,89 @@ right = A
 left = D
 both = A+D
 
-#SPEED = 50
+DEFAULT_SPEED = 50
 MAX_VALUE=255
 
+BEAT = .25
+snowman = [
+	(329,BEAT*1000,BEAT),(329,BEAT*1000,BEAT),(329,BEAT*1000,BEAT),(246,BEAT*1000,BEAT),
+	(329,BEAT*1000,BEAT),(415,2*BEAT*1000,2*BEAT),(370,2*BEAT*1000,2*BEAT),
+	(415,2*BEAT*1000,2*BEAT),
+	(329,BEAT*1000,BEAT),(329,BEAT*1000,BEAT),(329,BEAT*1000,BEAT),
+	(246,BEAT*1000,BEAT),(329,BEAT*1000,BEAT),(415,BEAT*1000,BEAT),
+	(370,3*BEAT*1000,BEAT)
+]
+
+DEFAULT_MODE = 'ir_control'
+
+def sound_test(volume=100):
+	print "sound_test"
+	sound.open_device()
+	print "playing tone"
+	for frequency, duration, sleep in snowman:
+		print frequency, duration, sleep
+		sound.play_tone(frequency, int(round(duration)), volume)
+		time.sleep(sleep)
+	print "closing sound device"
+	sound.close_device
+
+def touch_sensor_test():
+	print "touch_sensor_test"
+	touch_sensor = EV3TouchSensor(ev3.SENSOR_4)
+	print "begin acquisition"
+	while True:
+		print touch_sensor.is_pressed()
 
 
-# def color_sensor_test():
-# 	print "color_sensor_test"
-# 	color_sensor = EV3ColorSensor(ev3.SENSOR_2)
-# 	color_sensor.set_color_mode()
-# 	while 1:
-# 		print color_sensor.get_value()
+def color_sensor_color_test_raw():
+	print "color_sensor_color_test_raw"
+	uartdevice.open_device()
+	color_sensor = EV3ColorSensor(ev3.SENSOR_3)
+	print "setting color mode"
+	color_sensor.set_color_mode()
+	color_sensor.set_ref_raw_mode()
+	print "begin acquisition"
+	while True:
+		print color_sensor.get_value()
+
+def color_sensor_color_test():
+	print "color_sensor_color_test"
+	color_sensor = EV3ColorSensor(ev3.SENSOR_3)
+	print "setting color mode"
+	color_sensor.set_color_mode()
+	color_sensor.color_to_string()
+	#color_sensor.set_ref_raw_mode()
+	print "begin acquisition"
+	while True:
+		print color_sensor.color_to_string(), color_sensor.get_value()
+
+def color_sensor_reflect_test():
+	print "color_sensor_reflect_test"
+	color_sensor = EV3ColorSensor(ev3.SENSOR_3)
+	print "setting reflect mode"
+	color_sensor.set_reflect_mode()
+	#color.set_ref_raw_mode()
+	print "begin acquisition"
+	while True:
+		print color_sensor.get_value()
+
+def color_sensor_ambient_test():
+	print "color_sensor_ambient_test"
+	color_sensor = EV3ColorSensor(ev3.SENSOR_3)
+	print "setting ambient mode"
+	color_sensor.set_ambient_mode()
+	#color.set_ref_raw_mode()
+	print "begin acquisition"
+	while True:
+		print color_sensor.get_value()
+
 
 def ir_test():
 	print "ir_control test mode"
 	ir_sensor = EV3IRSensor(ev3.SENSOR_2)
 	print "setting remote control mode"
 	ir_sensor.set_remote_control_mode()
+	print "begin acquisition"
 	while True:
 	    ir_sensor_command = ir_sensor.get_remote_control_command(channel=1)
 	    print ir_sensor_command
@@ -59,15 +131,21 @@ def ir_control(speed):
 	print "setting remote control mode"
 	ir_sensor.set_remote_control_mode()
 	#motordevice.stop(both,brake=0)    	
+	print "begin acquisition"
 	while True:
 	    ir_sensor_command = ir_sensor.get_remote_control_command(channel=1)
 	    ir_sensor_command_dict = remote_control_map.get(ir_sensor_command)
+
+	    # modes 6 and 7 have different directions and speeds for motors,
+	    # need to differently handle
 	    if ir_sensor_command == 6:
 	    	motordevice.speed(D, speed)
 	    	motordevice.speed(A,MAX_VALUE-speed)
 	    elif ir_sensor_command == 7:
 	    	motordevice.speed(D, MAX_VALUE-speed)
 	    	motordevice.speed(A,speed)
+	    elif ir_sensor_command == 9:
+	    	sound_test(100)
 	    elif ir_sensor_command != 0:
 	        print "command: {0} - {1}".format(
 	        	ir_sensor_command,
@@ -83,18 +161,39 @@ def ir_control(speed):
 	    time.sleep(.1)
 
 def main():
-
 	parser = ArgumentParser()
 	parser.add_argument(
 		'--speed', 
-		help='motor speed (max value 100)', 
+		help='motor speed (default {0}, max 100)'.format(DEFAULT_SPEED), 
 		type=int, 
-		default=30)
+		default=DEFAULT_SPEED)
+	parser.add_argument(
+		'--mode',
+		help='control mode (default ir_control, others color_sensor_test, ir_test',
+		type=str,
+		default=DEFAULT_MODE	
+	)
 	options = parser.parse_args()
 	speed = options.speed
-	#color_sensor_test()
-	ir_control(speed)
-	#ir_test()
+	mode = options.mode
+	if mode == 'ir_control':
+		ir_control(speed)
+	elif mode == 'touch_sensor_test':
+		touch_sensor_test()
+	elif mode == 'color_sensor_reflect_test':	
+		color_sensor_reflect_test()
+	elif mode == 'color_sensor_ambient_test':	
+		color_sensor_ambient_test()	
+	elif mode == 'ir_test':
+		ir_test()
+	elif mode == 'color_sensor_color_test_raw':
+		color_sensor_color_test_raw()
+	elif mode == 'color_sensor_color_test':
+		color_sensor_color_test()
+	elif mode == 'sound_test':
+		sound_test(100)
+	else:
+		print "Invalid mode '{0}', try again.".format(mode)
 
 main()
 
