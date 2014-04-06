@@ -41,19 +41,19 @@ def ir_test():
 
 def ir_control(speed):
 	remote_control_map = {
-	0: {'label': 'off', 'motor': both, 'value': 0},
-	1: {'label': 'left_up', 'motor': D, 'value': speed},
-	2: {'label': 'left_down', 'motor': D, 'value': MAX_VALUE-speed},
-	3: {'label': 'right_up', 'motor': A, 'value': speed},
-	4: {'label': 'right_down', 'motor': A, 'value': MAX_VALUE-speed},
-	5: {'label': 'both_up', 'motor': both, 'value': speed},
-	6: {'label': 'left_up_right_down', 'motor': both, 'value': 0},
-	7: {'label': 'left_down_right_up', 'motor': both, 'value': 0},
-	8: {'label': 'both_down', 'motor': both, 'value': MAX_VALUE-speed},
-	9: {'label': 'top', 'motor': both, 'value': 0},
-	10:{'label': 'both_left', 'motor': both, 'value': 0},
-	11:{'label': 'both_right', 'motor': both, 'value': 0}
-}
+		0: {'label': 'off', 'motor': both, 'value': 0},
+		1: {'label': 'left_up', 'motor': D, 'value': speed},
+		2: {'label': 'left_down', 'motor': D, 'value': MAX_VALUE-speed},
+		3: {'label': 'right_up', 'motor': A, 'value': speed},
+		4: {'label': 'right_down', 'motor': A, 'value': MAX_VALUE-speed},
+		5: {'label': 'both_up', 'motor': both, 'value': speed},
+		6: {'label': 'left_up_right_down', 'motor': both, 'value': 0},
+		7: {'label': 'left_down_right_up', 'motor': both, 'value': 0},
+		8: {'label': 'both_down', 'motor': both, 'value': MAX_VALUE-speed},
+		9: {'label': 'top', 'motor': both, 'value': 0},
+		10:{'label': 'both_left', 'motor': both, 'value': 0},
+		11:{'label': 'both_right', 'motor': both, 'value': 0}
+	}
 	print "ir_control mode"
 	ir_sensor = EV3IRSensor(ev3.SENSOR_2)
 	print "setting remote control mode"
